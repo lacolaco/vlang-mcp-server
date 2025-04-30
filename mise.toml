@@ -1,6 +1,9 @@
 [tools]
-"npm:@modelcontextprotocol/inspector" = "latest" # install mcp-inspector command
+"npm:@modelcontextprotocol/inspector" = "0.10.2" # install mcp-inspector command
 
 [tasks]
-[tasks.inspector]
-run = "mcp-inspector v run ./main.v"
+[tasks.dev]
+run = "mcp-inspector -- v run ./main.v"
+
+[tasks.dev-cli]
+run = "mcp-inspector --cli --method tools/list -- v run ./main.v"
