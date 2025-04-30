@@ -69,7 +69,7 @@ fn handle_jsonrpc(input string) !string {
 			resp := McpToolsListResponse{
 				jsonrpc: '2.0'
 				id:      rpc.id
-				result:  McpToolsListResult{
+				result:  struct {
 					tools: [
 						Tool{
 							name:         'echo'
@@ -197,11 +197,9 @@ struct McpToolsListRequest {
 
 struct McpToolsListResponse {
 	JsonRpcResponseBase
-	result McpToolsListResult
-}
-
-struct McpToolsListResult {
-	tools []Tool @[json: 'tools'; required]
+	result struct {
+		tools []Tool @[json: 'tools'; required]
+	}
 }
 
 struct McpToolsCallRequest {
@@ -211,8 +209,6 @@ struct McpToolsCallRequest {
 		arguments JsonObject
 	}
 }
-
-type CallToolResultContent = TextContent
 
 struct McpToolsCallResponse {
 	JsonRpcResponseBase
