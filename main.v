@@ -7,35 +7,35 @@ fn main() {
 	msg := 'Hello, V!'
 	eprintln(msg)
 
-	// 標準入力からのメッセージを処理する
+	// Process messages from standard input
 	for {
 		eprintln('Waiting for message...')
-		// 入力行を読み取る
+		// Read input line
 		input := os.get_line()
 		eprintln('Processing message: ${input}')
 
-		// 空行は終了条件
+		// Empty line is the termination condition
 		if input.trim_space() == '' {
 			eprintln('Empty line, ending process')
 			break
 		}
 
 		output := handle_jsonrpc(input) or {
-			// エラーが発生した場合はエラーレスポンスを返す
+			// Return error response if an error occurs
 			eprintln('Error processing request: ${err}')
 			continue
 		}
-		// 処理結果を出力
+		// Output the processing result
 		println(dump(output))
 	}
 }
 
 fn handle_jsonrpc(input string) !string {
-	rpc := json.decode(JsonRpcRequest, input) or {
-		// エラーが発生した場合はエラーレスポンスを返す
+	rpc := json.decode(JsonRpcRequestBase, input) or {
+		// Return error response if an error occurs
 		return error('Failed to parse JSON-RPC request: ${err}')
 	}
-	// メソッドに応じて処理を分岐
+	// Branch processing according to the method
 	match rpc.method {
 		'ping' {
 			resp := McpPingResponse{
@@ -72,11 +72,15 @@ fn handle_jsonrpc(input string) !string {
 				result:  McpToolsListResult{
 					tools: [
 						Tool{
-							name:         'ExampleTool'
+							name:         'echo'
 							description:  'This is an example tool.'
 							input_schema: ToolInputSchema{
 								type:       'object'
-								properties: {}
+								properties: {
+									'text': ToolInputSchemaProperty{
+										type: 'string'
+									}
+								}
 								required:   []
 							}
 						},
@@ -84,6 +88,34 @@ fn handle_jsonrpc(input string) !string {
 				}
 			}
 			return json.encode(resp)
+		}
+		'tools/call' {
+			// Decode the request parameters
+			call := json.decode(McpToolsCallRequest, input) or {
+				return error('Failed to parse tools/call request: ${err}')
+			}
+			match call.params.name {
+				'echo' {
+					message := call.params.arguments['text'] or { 'default message' } as string
+					resp := McpToolsCallResponse{
+						jsonrpc: '2.0'
+						id:      call.id
+						result:  struct {
+							content:  [
+								{
+									'type': JsonValue('text')
+									'text': JsonValue(message)
+								},
+							]
+							is_error: false
+						}
+					}
+					return json.encode(resp)
+				}
+				else {
+					return error('Tool not found')
+				}
+			}
 		}
 		else {
 			return error('Unsupported method: ${rpc.method}')
@@ -97,13 +129,6 @@ struct JsonRpcRequestBase {
 	jsonrpc string @[json: 'jsonrpc'; required]
 	id      MessageId
 	method  string @[required]
-}
-
-struct JsonRpcRequest {
-	jsonrpc string @[json: 'jsonrpc'; required]
-	id      MessageId
-	method  string @[required]
-	params  string @[raw]
 }
 
 struct JsonRpcResponseBase {
@@ -178,3 +203,24 @@ struct McpToolsListResponse {
 struct McpToolsListResult {
 	tools []Tool @[json: 'tools'; required]
 }
+
+struct McpToolsCallRequest {
+	JsonRpcRequestBase
+	params struct {
+		name      string
+		arguments JsonObject
+	}
+}
+
+type CallToolResultContent = TextContent
+
+struct McpToolsCallResponse {
+	JsonRpcResponseBase
+	result struct {
+		content  []map[string]JsonValue
+		is_error bool @[json: 'isError']
+	}
+}
+
+type JsonValue = string | f64 | bool | []JsonValue | map[string]JsonValue
+type JsonObject = map[string]JsonValue

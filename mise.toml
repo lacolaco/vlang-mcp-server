@@ -3,7 +3,7 @@
 
 [tasks]
 [tasks.dev]
-run = "mcp-inspector -- v run ./main.v"
+run = "mcp-inspector -- v run ."
 
 [tasks.dev-cli]
-run = "mcp-inspector --cli --method tools/list -- v run ./main.v"
+run = "mcp-inspector --cli --method tools/list -- v run ."

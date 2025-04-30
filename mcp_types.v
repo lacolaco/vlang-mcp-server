@@ -18,3 +18,14 @@ struct ToolInputSchemaProperty {
 pub:
 	type string
 }
+
+struct ContentBase {
+pub:
+	type string
+}
+
+struct TextContent {
+	ContentBase
+pub:
+	text string
+}

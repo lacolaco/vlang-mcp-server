@@ -1,6 +1,6 @@
 # Binaries for programs and plugins
 main
-vlang_mcp_server
+vlang-mcp-server
 *.exe
 *.exe~
 *.so
